@@ -1,4 +1,5 @@
-from memdb import Schema, Dataset
+from memdb.dataset import Dataset
+from memdb.schema import Schema
 
 if __name__ == "__main__":
     schema = Schema()
