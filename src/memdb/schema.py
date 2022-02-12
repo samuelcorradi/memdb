@@ -179,14 +179,6 @@ class Schema(object):
         cp._alias = copy.copy(self._alias)
         return cp
 
-    # TODO: remover este methodo
-    def _get_default_name(self):
-        """
-        """
-        warnings.warn('Method "Schema._get_default_name" will be discontinued. Use "Schema.gen_field_name" instead.')
-        # return Schema.default_name.format(len(self._schema))
-        return self.gen_field_name()
-
     def _instance_gen_field_name(self):
         """
         Gera um novo nome para um campo.
@@ -487,5 +479,6 @@ if __name__ == "__main__":
     schema.add_field()
     print(schema)
     print(schema.len())
+
     print(schema.sql_create_table())
     
