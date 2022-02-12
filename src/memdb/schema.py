@@ -204,26 +204,12 @@ class Schema(object):
         if ftype=='string':
             warnings.warn('Use Python types to define the data type. Instead of using "string" use "str".')
             ftype = str
-        """
-        f = {'name':name
-            , 'ftype':ftype
-            , 'size':size
-            , 'default':default
-            , 'primary_key':primary_key
-            , 'auto_increment':auto_increment
-            , 'null':null}
-        return f
-        """
         f = self._Field(name=name
             , ftype=ftype
             , size=size
             , default=default
             , auto_increment=auto_increment
             , optional=optional)
-        # TODO: alterar o metodo add_field para receber um objeto do tipo _Field
-        # self._schema.append(f)
-        # if primary_key:
-        #     self.set_primary(f)
         return f
 
     def Field(self
@@ -276,15 +262,6 @@ class Schema(object):
             # TODO remover a propriedade "null". "optional" entra no lugar.
             , null=null)
         f.set_schema(self)
-        """
-        # substitui por __append_field
-        if col_ref is None:
-            self._schema.append(f)
-        else:
-            if pos=='a':
-                col_ref += 1
-            self._schema[col_ref:col_ref] = [f]
-        """
         self.__append_field(field=f, col_ref=col_ref, pos=pos)
         if primary_key:
             self.set_primary(f)
