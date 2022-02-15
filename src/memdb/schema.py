@@ -33,12 +33,33 @@ class Schema(object):
             , default=None
             , auto_increment:int=0
             , optional:bool=False):
+            self._schema:Schema = None
             self._f = {'size':size
                 , 'default': ftype(default)
                 , 'auto_increment':auto_increment
                 , 'optional':optional}
             self.set_name(name)
             self.set_type(ftype)
+
+        def copy(self, deep:bool=True):
+            cp = copy.deepcopy(self) if deep else copy.copy(self)
+            cp._schema = self._schema
+            if cp._schema:
+                cp._schema.append_field(cp)
+
+        def __deepcopy__(self, memo):
+            cp = object.__new__(type(self))
+            cp._f = copy.deepcopy(self._f)
+            return cp
+
+        def __copy__(self):
+            """
+            Create an independent copy of this
+            object.
+            """
+            cp = object.__new__(type(self))
+            cp._f = self._f
+            return cp
 
         def set_type(self, ftype):
             """
@@ -73,7 +94,7 @@ class Schema(object):
             Gets the field name. If field has 
             an alias, return the alias.
             """
-            if use_alias and len(self._schema._alias)>0:
+            if self._schema and use_alias and len(self._schema._alias)>0:
                 alias, fields = self._schema._alias.items()
                 if self in fields:
                     return self._alias[fields.index(self)]
@@ -95,12 +116,13 @@ class Schema(object):
         return len(self._schema)
 
     def to_sql(self
-        , tablename:str
         , cmd_prefix=''
         , cmd_sufix=''
         , max_limit=400
         , min_limit=6
-        , exclude_zero_lenght=True)->str:
+        , exclude_zero_lenght=True
+        # remove o tablename pq eh obrigatorio ter um nome
+        , tablename:str=None)->str:
         return self.sql_create_table(tablename=tablename
             , cmd_prefix=cmd_prefix
             , cmd_sufix=cmd_sufix
@@ -113,7 +135,9 @@ class Schema(object):
         , cmd_sufix=''
         , max_limit=400
         , min_limit=6
-        , exclude_zero_lenght=True)->str:
+        , exclude_zero_lenght=True
+        # remove o tablename pq eh obrigatorio ter um nome
+        , tablename:str=None)->str:
         """
         Cria comando SQL para create table.
         """
@@ -167,13 +191,35 @@ class Schema(object):
                 , min_limit=min_limit) + "\n")
         return cmd_prefix + "CREATE TABLE {} (\n\t  ".format(self._name) + "\t, ".join(field_list) + ")" + cmd_sufix
 
-    def copy(self)->Schema:
+    def copy(self, newname=None, deep:bool=False)->Schema:
         """
         Faz uma copia do objeto de Schema.
         Eh usado quando se faz copias
         de Datasets.
         """
-        cp = Schema()
+        cp = copy.deepcopy(self) if deep else copy.copy(self)
+        if not newname:
+            newname=self._name + '_cp'
+        cp._name = newname
+        return cp
+
+    def __deepcopy__(self, mode):
+        cp = Schema(self._name)
+        # cp._name = self._name
+        for f in self._schema:
+            fcp = copy.deepcopy(f)
+            fcp._schema = cp
+            cp.append_field(fcp)
+            if f in self._pks:
+                cp._pks.append(fcp)
+            # cp._alias = copy.copy(self._alias)
+        if self._alias:
+            k, v = self._alias.items()
+        return cp
+
+    def __copy__(self):
+        cp = object.__new__(type(self))
+        cp._name = self._name
         cp._schema = copy.copy(self._schema)
         cp._pks = copy.copy(self._pks)
         cp._alias = copy.copy(self._alias)
@@ -227,7 +273,7 @@ class Schema(object):
         e adicionar novos campos ao schema.
         """
         # se nao foi passado um nome, gera um nome
-        return self.add_field(name=name
+        f = self.add_field(name=name
             , ftype=ftype
             , size=size
             , default=default
@@ -236,6 +282,7 @@ class Schema(object):
             , optional=optional
             , col_ref=col_ref
             , pos=pos)
+        return f
 
     def add_field(self
         , name:str=None
@@ -248,7 +295,7 @@ class Schema(object):
         , col_ref:int=None
         , pos:str='a'
         # TODO remover a propriedade "null". "optional" entra no lugar.
-        , null:bool=None)->Schema:
+        , null:bool=None)->_Field:
         if null is not None:
             warnings.warn('The "null" property will be deprecated. Use "optional" instead.')
             # optional = null
@@ -262,10 +309,29 @@ class Schema(object):
             # TODO remover a propriedade "null". "optional" entra no lugar.
             , null=null)
         f.set_schema(self)
-        self.__append_field(field=f, col_ref=col_ref, pos=pos)
+        self.append_field(field=f, col_ref=col_ref, pos=pos)
         if primary_key:
             self.set_primary(f)
-        return self
+        return f
+
+    def get_field_pos(self, name)->int:
+        """
+        Retorna a posicao que um campo
+        ocupa na lista de campos do schema.
+        """
+        if type(name) is int:
+            if name>=len(self._schema):
+                # print(str(self))
+                raise Exception("'%s' eh uma posicao alem da quantidade %s de campos no esquema do dataset." % (name, len(self._schema)))
+            return name
+        elif type(name) is str:
+            allpos = self.get_all_field_pos()
+            pos = allpos.get(name, -1)
+            if pos<0:
+                raise Exception("'%s' eh um campo que nao existe do esquema do dataset." % name)
+            return pos
+        else:
+            raise Exception("Tipo nao identificado.")
 
     def rm_field(self, name)->Schema:
         pos = self.get_field_pos(name)
@@ -285,22 +351,7 @@ class Schema(object):
             allpos[f.get_name()]=i
         return allpos
 
-    def get_field_pos(self, name)->int:
-        if type(name) is int:
-            if name>=len(self._schema):
-                # print(str(self))
-                raise Exception("'%s' eh uma posicao alem da quantidade %s de campos no esquema do dataset." % (name, len(self._schema)))
-            return name
-        elif type(name) is str:
-            allpos = self.get_all_field_pos()
-            pos = allpos.get(name, -1)
-            if pos<0:
-                raise Exception("'%s' eh um campo que nao existe do esquema do dataset." % name)
-            return pos
-        else:
-            raise Exception("Tipo nao identificado.")
-
-    def __append_field(self
+    def append_field(self
         , field:_Field
         , col_ref=None
         , pos='a'):
@@ -385,15 +436,30 @@ class Schema(object):
             self._pks.append(field)
         return self
 
+    #################################
     # metodos de relacionamento
-
+    #################################
     def has(self
         , schema:Schema
+        , identified=True
         , target=None
         , alias=None):
         """
         """
-        pass
+        # se a lista de campos nao for informado
+        # utiliza as chaves primarias
+        if not target:
+            target = self._pk
+        i:int = 0
+        for f in target:
+            if not schema.field_exists(f):
+                schema.append_field(f)
+            if identified:
+                schema.set_primary(f)
+            if i<=(len(alias)-1):
+                self.set_alias(f, alias[i])
+            i += 1
+        return self
 
     def belongs(self
         , schema:Schema
@@ -447,15 +513,4 @@ class Schema(object):
         self._alias[alias] = field
         return self
 
-if __name__ == "__main__":
-    # a classe gera nome de colunas
-    print(Schema.gen_field_name(10))
-
-    schema = Schema("teste")
-    schema.add_field('nome')
-    schema.add_field()
-    print(schema)
-    print(schema.len())
-
-    print(schema.sql_create_table())
     
