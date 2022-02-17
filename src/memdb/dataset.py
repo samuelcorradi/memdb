@@ -60,7 +60,7 @@ class Dataset(object):
         if type(row) is dict:
             nrow = [None]*len(self._schema.get_names())
             for k, v in row.items():
-                pos = self._schema.get_field_pos(k)
+                pos = self._schema.get_field_pos(k)-1
                 if pos==-1:
                     raise Exception("O campo %s onde se está tentando inserir não existe." % k)
                 nrow[pos] = v
@@ -275,17 +275,20 @@ class Dataset(object):
             m = re.findall(r'\[([a-zA-Z0-9\_]+)\]([a-zA-Z]*)', name)
             if m:
                 return m[0]
+        # por padrao considera tudo
         filter_result = [True]*len(self._data)
         for i, row in enumerate(self._data):
             if type(filter) is dict:
                 for k, v in filter.items():
                     mod = ''
+                    # se a chave for string
                     if type(k) is str:
                         parsed = parse_name(k)
+                        print(parsed)
                         if parsed:
                             k = parsed[0]
                             mod = parsed[1].lower()
-                        k = self._schema.get_all_field_pos()[k]
+                        k = self._schema.get_all_field_pos()[k]-1
                     if not mod:
                         mod = 'equal'
                     if (mod=='equal' and row[k]!=v)\
@@ -295,3 +298,4 @@ class Dataset(object):
                         filter_result[i] = False
                         continue
         return filter_result
+
