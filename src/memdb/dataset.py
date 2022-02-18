@@ -277,6 +277,7 @@ class Dataset(object):
                 return m[0]
         # por padrao considera tudo
         filter_result = [True]*len(self._data)
+        fpos = self._schema.get_all_field_pos()
         for i, row in enumerate(self._data):
             if type(filter) is dict:
                 for k, v in filter.items():
@@ -288,7 +289,7 @@ class Dataset(object):
                         if parsed:
                             k = parsed[0]
                             mod = parsed[1].lower()
-                        k = self._schema.get_all_field_pos()[k]-1
+                        k = fpos[k]-1
                     if not mod:
                         mod = 'equal'
                     if (mod=='equal' and row[k]!=v)\
