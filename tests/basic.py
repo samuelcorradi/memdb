@@ -2,7 +2,7 @@ from memdb.dataset import Dataset
 from schemy import Schema
 
 if __name__ == "__main__":
-    schema = Schema()
+    schema = Schema('Clients')
     schema.add_field('nome')
     schema.add_field()
     dataset = Dataset(schema)
