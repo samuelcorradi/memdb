@@ -289,6 +289,8 @@ class Dataset(object):
                         if parsed:
                             k = parsed[0]
                             mod = parsed[1].lower()
+                        if k not in fpos:
+                            raise Exception("The field '{}' used in the filter does not exist in the schema.".format(k))
                         k = fpos[k]-1
                     if not mod:
                         mod = 'equal'
@@ -299,4 +301,3 @@ class Dataset(object):
                         filter_result[i] = False
                         continue
         return filter_result
-
