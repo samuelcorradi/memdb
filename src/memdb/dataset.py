@@ -137,7 +137,7 @@ class Dataset(object):
 
     def add_field(self
         , name:str
-        , ftype:str='string'
+        , ftype:str=str
         , size:int=50
         , default=None
         , primary_key:bool=False
