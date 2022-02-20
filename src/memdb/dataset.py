@@ -8,11 +8,13 @@ class Dataset(object):
     def __init__(self, schema:Schema):
         """
         """
-        self._data = []
-        self._idx = 0
-        if not schema:
+        if isinstance(schema, str):
+            schema = Schema(name=schema)
+        if not isinstance(schema, Schema):
             raise Exception("Every dataset needs a schema.")
         self._schema = schema
+        self._data = []
+        self._idx = 0
 
     def __str__(self)->str:
         return self.to_str()
