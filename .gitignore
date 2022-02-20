@@ -4,3 +4,4 @@ dist/
 src/memdb.egg-info/
 .DS_Store
 .python-version
+src/memdb/__pycache__/
