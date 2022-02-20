@@ -25,6 +25,7 @@ class Dataset(object):
         #print(sizes)
         for row in self._data:
             for f, p in field_list.items():
+                p = p - 1 # a posicao dos campos comecao com 0, nao 1
                 s = len(str(row[p]))
                 if sizes[f]<s:
                     sizes[f] = s
