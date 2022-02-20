@@ -5,13 +5,13 @@ from schemy import Schema
 
 class Dataset(object):
 
-    def __init__(self, schema:Schema=None):
+    def __init__(self, schema:Schema):
         """
         """
         self._data = []
         self._idx = 0
         if not schema:
-            schema = Schema()
+            raise Exception("Every dataset needs a schema.")
         self._schema = schema
 
     def __str__(self)->str:
