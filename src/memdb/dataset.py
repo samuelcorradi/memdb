@@ -139,18 +139,18 @@ class Dataset(object):
         , default=None
         , primary_key:bool=False
         , auto_increment:int=0
-        , null:bool=True
         , col_ref:int=None
-        , pos='a'):
+        , pos='a'
+        , optional:bool=True):
         self._schema.add_field(name=name
             , ftype=ftype
             , size=size
             , default=default
             , primary_key=primary_key
             , auto_increment=auto_increment
-            , null=null
             , col_ref=col_ref
-            , pos=pos)
+            , pos=pos
+            , optional=optional)
         pos = self._schema.get_field_pos(name)
         for _, row in enumerate(self._data):
             row[pos:pos] = [default]
@@ -158,7 +158,6 @@ class Dataset(object):
 
     def remove_col(self, col):
         pos = self._schema.get_field_pos(col)
-
         if pos is not None:
             self._schema.rm_field(pos)
             for row in self._data:
