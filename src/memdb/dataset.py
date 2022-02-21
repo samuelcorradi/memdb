@@ -166,8 +166,8 @@ class Dataset(object):
     def remove_col(self, col):
         pos = self._schema.get_field_pos(col)
         if pos:
-            pos = pos - 1
             self._schema.rm_field(pos)
+            pos = pos - 1
             for row in self._data:
                 del row[pos]
         return self
