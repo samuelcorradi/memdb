@@ -63,9 +63,10 @@ class Dataset(object):
         if type(row) is dict:
             nrow = [None]*len(self._schema.get_names())
             for k, v in row.items():
-                pos = self._schema.get_field_pos(k)-1
-                if pos==-1:
-                    raise Exception("O campo %s onde se está tentando inserir não existe." % k)
+                pos = self._schema.get_field_pos(k)
+                if not pos:
+                    raise Exception("O campo '%s' onde se está tentando inserir não existe." % k)
+                pos = pos - 1
                 nrow[pos] = v
             row = nrow
             self._insert(row, idx)
@@ -155,13 +156,17 @@ class Dataset(object):
             , pos=pos
             , optional=optional)
         pos = self._schema.get_field_pos(name)
+        if not pos:
+            raise Exception("Error creating new field '{}'.".format(name))
+        pos = pos - 1
         for _, row in enumerate(self._data):
             row[pos:pos] = [default]
         return self
 
     def remove_col(self, col):
         pos = self._schema.get_field_pos(col)
-        if pos is not None:
+        if pos:
+            pos = pos - 1
             self._schema.rm_field(pos)
             for row in self._data:
                 del row[pos]
