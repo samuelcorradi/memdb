@@ -5,19 +5,21 @@ from schemy import Schema
 
 class Dataset(object):
 
-    def __init__(self, schema:Schema):
+    def __init__(self, schema:Schema=None):
         """
         """
-        if isinstance(schema, str):
-            schema = Schema(name=schema)
-        if not isinstance(schema, Schema):
-            raise Exception("Every dataset needs a schema.")
         self._schema = schema
         self._data = []
         self._idx = 0
 
     def __str__(self)->str:
         return self.to_str()
+
+    def load(drive:str, **kwargs:dict):
+        pass
+
+    def save(drive:str, **kwargs:dict):
+        pass
 
     def get_fields_size(self, rate:float=0.0)->dict:
         """
