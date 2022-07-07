@@ -2,7 +2,8 @@ from memdb.dataset import Dataset
 from schemy import Schema
 
 if __name__ == "__main__":
-    schema = Schema('Clients')
+
+    schema = Schema()
     schema.add_field('nome')
     schema.add_field()
     dataset = Dataset(schema)
@@ -16,3 +17,6 @@ if __name__ == "__main__":
     # create a new dataset after filter
     rows = dataset.where({'[nome]diff':'Samuel Corradi'})
     print(rows)
+
+    outro = Dataset()
+    outro.add_field('nome', size=250, optional=False)
