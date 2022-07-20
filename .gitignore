@@ -6,3 +6,4 @@ src/memdb.egg-info/
 .python-version
 src/memdb/__pycache__/
 tests/local_*
+.dnconfig

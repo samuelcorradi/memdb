@@ -8,9 +8,17 @@ class Dataset(object):
     def __init__(self, schema:Schema=None):
         """
         """
-        self._schema = schema
+        self.__set_schema(schema)
         self._data = []
         self._idx = 0
+
+    def __set_schema(self, schema:Schema=None):
+        """
+        Private set method to schema.
+        """
+        if not schema:
+            schema = Schema()
+        self._schema = schema
 
     def __str__(self)->str:
         return self.to_str()
