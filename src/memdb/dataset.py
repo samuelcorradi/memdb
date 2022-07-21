@@ -49,15 +49,21 @@ class Dataset(object):
     def columns(self):
         return self._schema.get_names()
 
-    def to_str(self, length:int=None)->str:
+    def to_str(self, length:int=None, limit:int=None)->str:
+        """
+        length: length of each column
+        """
         fields = self._schema.get_names()
         if not fields:
             return '| * No fields * |'
         if not length:
             length = int(80/len(fields))
         r = '| ' + ' | '.join([name.ljust(length, ' ')[:length] for name in fields]) + ' |\n'
-        for _, row in enumerate(self._data):
-            r += '| ' + ' | '.join([str(i).ljust(length, ' ')[:length] for i in row]) + ' |\n'
+        for i, row in enumerate(self._data):
+            print(row)
+            if limit and i>=limit:
+                break
+            r += '| ' + ' | '.join([str(j).ljust(length, ' ')[:length] for j in row]) + ' |\n'
         return r
 
     def get_schema(self):
