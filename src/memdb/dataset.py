@@ -286,6 +286,12 @@ class Dataset(object):
         # return new_dataset
         return self
 
+    def all(self):
+        """
+        Get all data. Without any filter.
+        """
+        return self._data
+
     def filter(self, filter)->list:
         """
         equal usa-se um dicionário: {'[campo]':2}
