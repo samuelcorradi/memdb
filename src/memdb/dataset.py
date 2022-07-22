@@ -5,14 +5,18 @@ from schemy import Schema
 
 class Dataset(object):
 
-    def __init__(self, schema:Schema=None):
+    def __init__(self
+        , schema:Schema=None
+        , date_format='yyyy-MM-dd hh:mm:ss'):
         """
         """
         self.__set_schema(schema)
         self._data = []
         self._idx = 0
+        self._date_format = date_format
 
-    def __set_schema(self, schema:Schema=None):
+    def __set_schema(self
+        , schema:Schema=None):
         """
         Private set method to schema.
         """
@@ -211,6 +215,7 @@ class Dataset(object):
         destruir o original.
         """
         cp = Dataset(copy.deepcopy(self._schema))
+        cp._date_format = self._date_format
         if copy_data:
             cp._data = copy.deepcopy(self._data)
         return cp
