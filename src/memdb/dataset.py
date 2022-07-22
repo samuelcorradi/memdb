@@ -175,6 +175,7 @@ class Dataset(object):
         , auto_increment:int=0
         , col_ref:int=None
         , pos='a'
+        , format:str=None
         , optional:bool=True):
         self._schema.add_field(name=name
             , ftype=ftype
@@ -184,7 +185,8 @@ class Dataset(object):
             , auto_increment=auto_increment
             , col_ref=col_ref
             , pos=pos
-            , optional=optional)
+            , optional=optional
+            , format=format)
         pos = self._schema.get_field_pos(name)
         if not pos:
             raise Exception("Error creating new field '{}'.".format(name))
