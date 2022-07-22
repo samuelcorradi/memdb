@@ -72,6 +72,17 @@ class Dataset(object):
         """
         return self._schema
 
+    def _insert_list(self, row:list, idx:int=None):
+        """
+        """
+        if len(row)!=len(self._schema.get_names()):
+            print((len(row), len(self._schema.get_names()), row))
+            raise Exception("Número de colunas a inserir difere do número de colunas do schema definido.")
+        if not idx:
+            self._data.append(copy.copy(row))
+        else:
+            self._data[idx] = copy.copy(row)
+
     def _insert(self, row, idx:int=None)->Dataset:
         """
         Insere dados no dataset.
@@ -87,6 +98,8 @@ class Dataset(object):
             row = nrow
             self._insert(row, idx)
         elif type(row) is list:
+            self._insert_list(row)
+            """
             if len(row)!=len(self._schema.get_names()):
                 print((len(row), len(self._schema.get_names()), row))
                 raise Exception("Número de colunas a inserir difere do número de colunas do schema definido.")
@@ -94,6 +107,7 @@ class Dataset(object):
                 self._data.append(copy.copy(row))
             else:
                 self._data[idx] = copy.copy(row)
+            """
         elif type(row) is tuple:
             self._insert(list(row), idx)
         else:
@@ -154,7 +168,7 @@ class Dataset(object):
 
     def add_field(self
         , name:str
-        , ftype:str=str
+        , ftype=str
         , size:int=50
         , default=None
         , primary_key:bool=False
