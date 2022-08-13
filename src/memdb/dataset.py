@@ -9,13 +9,19 @@ class Dataset(object):
 
     def __init__(self
         , schema:Schema=None
-        , date_format='yyyy-MM-dd hh:mm:ss'):
+        , date_out_format='yyyy-MM-dd hh:mm:ss'):
         """
         """
         self.__set_schema(schema)
         self._data = []
         self._idx = 0
-        self._date_format = date_format
+        self._date_out_format = date_out_format
+
+    def __iter__(self):
+        return self.rewind()
+
+    def __next__(self):
+        return self.next()
 
     def __set_schema(self
         , schema:Schema=None):
@@ -42,7 +48,7 @@ class Dataset(object):
         sizes = dict(zip(field_list.keys(), [0]*len(field_list)))
         #print(sizes)
         for row in self._data:
-            _row = self.__parse_row(row)
+            _row = self._parse_row(row)
             for f, p in field_list.items():
                 p = p - 1 # a posicao dos campos comecao com 0, nao 1
                 s = len(str(_row[p]))
@@ -63,24 +69,24 @@ class Dataset(object):
         fields = self._schema.get_names()
         if not fields:
             return '| * No fields * |'
-
-        min_width = []
+        #
+        field_size = self.get_fields_size()
+        print(field_size)
+        #
+        width = []
         for fname in fields:
-            min_width.append(len(fname))
-
-        max_width = []
-        if length:
-            if length<4: length=4 # tamanho minimo, senao nao aparece nada
-            max_width = [length]*len(fields)
-            #length = int(80/len(fields))
-            #print(length)
-
-        r = '| ' + ' | '.join([name.ljust(min_width[j], ' ')[:min_width[j]] for j, name in enumerate(fields)]) + ' |\n'
+            name_width = len(fname)
+            val_width = field_size[fname]
+            if length and val_width>name_width:
+                val_width = 4 if length<4 else length
+            width.append(val_width if val_width>name_width else name_width)
+        #
+        r = '| ' + ' | '.join([name.ljust(width[j], ' ')[:width[j]] for j, name in enumerate(fields)]) + ' |\n'
         for i, row in enumerate(self._data):
-            _row = self.__parse_row(row)
+            _row = self._parse_row(row)
             if limit and i>=limit:
                 break
-            r += '| ' + ' | '.join([str(j).ljust(min_width[i], ' ')[:min_width[i]] for j in _row]) + ' |\n'
+            r += '| ' + ' | '.join([str(val).ljust(width[j], ' ')[:width[j]] for j, val in enumerate(_row)]) + ' |\n'
         return r
 
     def get_schema(self):
@@ -93,7 +99,7 @@ class Dataset(object):
         """
         """
         if len(row)!=len(self._schema.get_names()):
-            print((len(row), len(self._schema.get_names()), row))
+            # print((len(row), len(self._schema.get_names()), row))
             raise Exception("Número de colunas a inserir difere do número de colunas do schema definido.")
         if not idx:
             self._data.append(copy.copy(row))
@@ -128,7 +134,7 @@ class Dataset(object):
         elif type(row) is tuple:
             self._insert(list(row), idx)
         else:
-            print(type(row))
+            # print(type(row))
             raise Exception("Tipo não reconhecido.")
         return self
 
@@ -192,7 +198,7 @@ class Dataset(object):
         , auto_increment:int=0
         , col_ref:int=None
         , pos='a'
-        , format:str=None
+        , out_format:str=None
         , optional:bool=True):
         self._schema.add_field(name=name
             , ftype=ftype
@@ -203,7 +209,7 @@ class Dataset(object):
             , col_ref=col_ref
             , pos=pos
             , optional=optional
-            , format=format)
+            , out_format=out_format)
         pos = self._schema.get_field_pos(name)
         if not pos:
             raise Exception("Error creating new field '{}'.".format(name))
@@ -228,7 +234,7 @@ class Dataset(object):
         destruir o original.
         """
         cp = Dataset(copy.deepcopy(self._schema))
-        cp._date_format = self._date_format
+        cp._date_out_format = self._date_out_format
         if copy_data:
             cp._data = copy.deepcopy(self._data)
         return cp
@@ -276,15 +282,16 @@ class Dataset(object):
         if self._idx<0:
             return None
         try:
-            return self.__parse_row(self._data[self._idx])
+            return self._parse_row(self._data[self._idx])
         except:
-            return None
+            raise StopIteration
 
     def next(self):
         """
         """
+        v = self.current()
         self._idx += 1
-        return self.current()
+        return v
 
     def prev(self):
         """
@@ -310,26 +317,26 @@ class Dataset(object):
         """
         """
         row = self._data[idx]
-        return self.__parse_row(row)
+        return self._parse_row(row)
 
-    def __date_format_convert(self, date_format:str):
+    def __date_out_format_convert(self, date_out_format:str):
         """
         The regular dataformat (SQL data format) is
         not the same of datetime object in Python.
         This method is to convert the SQL format to
         Python format, so it can be used to convert
         datatime objects value to string.
-        @see __parse_row()
+        @see _parse_row()
         """
-        date_format = date_format.replace('yyyy', '%y').\
+        date_out_format = date_out_format.replace('yyyy', '%Y').\
             replace('MM', '%m').\
             replace('dd', '%d').\
             replace('hh', '%H').\
             replace('mm', '%M').\
             replace('ss', '%S')
-        return date_format
+        return date_out_format
 
-    def __parse_row(self, row:list):
+    def _parse_row(self, row:list):
         """
         Method to out lines parsing None values
         and casting other types to string.
@@ -339,7 +346,7 @@ class Dataset(object):
 
             ftype = self._schema._schema[i]._f['ftype']
             default = self._schema._schema[i]._f['default']
-            format = self._schema._schema[i]._f['format']
+            out_format = self._schema._schema[i]._f['out_format']
 
             # if value is null use default value
             col = default if col is None else col
@@ -348,9 +355,8 @@ class Dataset(object):
             if col is not None:
                 # se for do tipo datetime
                 if ftype in [datetime, date]:
-                    print("eh datetime")
-                    format = self._date_format if format is None else format
-                    col = col.strftime(self.__date_format_convert(format))
+                    out_format = self._date_out_format if out_format is None else out_format
+                    col = col.strftime(self.__date_out_format_convert(out_format))
             parsed_row.append(col)
         return parsed_row
 
@@ -369,7 +375,7 @@ class Dataset(object):
         """
         all_data = []
         for row in self._data:
-            all_data.append(self.__parse_row(row))
+            all_data.append(self._parse_row(row))
         return all_data
 
     def filter(self, filter)->list:
@@ -388,14 +394,14 @@ class Dataset(object):
         filter_result = [True]*len(self._data)
         fpos = self._schema.get_all_field_pos()
         for i, row in enumerate(self._data):
-            row = self.__parse_row(row)
+            row = self._parse_row(row)
             if type(filter) is dict:
                 for k, v in filter.items():
                     mod = ''
                     # se a chave for string
                     if type(k) is str:
                         parsed = parse_name(k)
-                        print(parsed)
+                        # print(parsed)
                         if parsed:
                             k = parsed[0]
                             mod = parsed[1].lower()
