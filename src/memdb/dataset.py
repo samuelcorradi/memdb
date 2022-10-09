@@ -37,7 +37,7 @@ class Dataset(object):
         if self.len()>10:
             string += '...\n'
         if not self.is_empty():
-            string += str(self.len()) + ' registros.'
+            string += '\n' + str(self.len()) + ' registros.'
         return string
 
     def load(drive:str, **kwargs:dict):
@@ -74,10 +74,9 @@ class Dataset(object):
         fields = self._schema.get_names()
         if not fields:
             return '| * No fields * |'
-        #
+            
         field_size = self.get_fields_size()
-        print(field_size)
-        #
+        
         width = []
         for fname in fields:
             name_width = len(fname)
