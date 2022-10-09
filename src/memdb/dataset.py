@@ -33,7 +33,12 @@ class Dataset(object):
         self._schema = schema
 
     def __str__(self)->str:
-        return self.to_str()
+        string = self.to_str(limit=10)
+        if self.len()>10:
+            string += '...\n'
+        if not self.is_empty():
+            string += str(self.len()) + ' registros.'
+        return string
 
     def load(drive:str, **kwargs:dict):
         pass
