@@ -1,9 +1,10 @@
 pyproject.toml
-setup.cfg
+/setup.cfg
+/setup.py
 dist/
 src/memdb.egg-info/
 .DS_Store
 .python-version
 src/memdb/__pycache__/
 tests/local_*
-.dnconfig
+/.dnconfig
