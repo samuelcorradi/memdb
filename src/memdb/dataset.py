@@ -293,6 +293,14 @@ class Dataset(object):
     def next(self):
         """
         """
+
+        if self._idx>=len(self._data):
+            raise StopIteration
+        row = self._data[self._idx]
+        self._idx += 1
+        return row
+
+
         v = self.current()
         self._idx += 1
         return v
@@ -405,7 +413,6 @@ class Dataset(object):
                     # se a chave for string
                     if type(k) is str:
                         parsed = parse_name(k)
-                        # print(parsed)
                         if parsed:
                             k = parsed[0]
                             mod = parsed[1].lower()
